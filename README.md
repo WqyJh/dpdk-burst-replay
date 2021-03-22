@@ -19,18 +19,24 @@ NB: libpcap is not required, as dpdk-replay process pcap files manually.
 
 ### Compiling and installing it
 
-> autoreconf -i && ./configure [--enable-debug] && make && sudo make install
-
-OR:
-
-> RTE_SDK=<RTE_SDK_PATH> make -f DPDK_Makefile && sudo cp build/dpdk-replay /usr/bin
+```bash
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+```
 
 ### Launching it
 
-> dpdk-replay [--nbruns NB] [--numacore 0|1] FILE NIC_ADDR[,NIC_ADDR...]
+```bash
+dpdk-replay [--nbruns NB] [--numacore 0|1] FILE NIC_ADDR[,NIC_ADDR...]
+```
 
 Example:
-> dpdk-replay --nbruns 1000 --numacore 0 foobar.pcap 04:00.0,04:00.1,04:00.2,04:00.3
+```bash
+dpdk-replay --nbruns 1000 --numacore 0 foobar.pcap 04:00.0,04:00.1,04:00.2,04:00.3
+```
 
 ## TODO
 
