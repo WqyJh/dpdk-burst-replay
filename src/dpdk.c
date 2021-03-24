@@ -324,7 +324,6 @@ int tx_thread(void* thread_ctx)
          ctx->total_drop += nb_drop, i++, diff++) {
         // Modify src and dst ip addresses
         if (diff > 0) {
-            printf("Modify packets with %u\n", diff);
             for (j = 0; j < ctx->nb_pkt; j++) {
                 struct rte_mbuf *mbuf = mbufs[j];
                 struct rte_ether_hdr *eth_hdr = rte_pktmbuf_mtod(mbuf, struct rte_ether_hdr *);
