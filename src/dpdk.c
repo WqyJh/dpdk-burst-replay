@@ -3,6 +3,8 @@
   Copyright 2018 Jonathan Ribas, FraudBuster. All rights reserved.
 */
 
+#include <rte_mbuf_core.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <time.h>
@@ -283,7 +285,7 @@ int tx_thread(void* thread_ctx)
     struct rte_mbuf**   mbuf;
     struct timespec     start, end;
     unsigned int        tx_queue;
-    int                 ret, thread_id, index, i, run_cpt, retry_tx;
+    int                 ret, thread_id, i, j, index, retry_tx;
     int                 nb_sent, to_sent, total_to_sent, total_sent;
     int                 nb_drop;
 
@@ -314,10 +316,24 @@ int tx_thread(void* thread_ctx)
         return (errno);
     }
 
+    uint32_t diff = 0;
+
     /* iterate on each wanted runs */
-    for (run_cpt = ctx->nbruns, tx_queue = ctx->total_drop = ctx->total_drop_sz = 0;
-         run_cpt;
-         ctx->total_drop += nb_drop, run_cpt--) {
+    for (i = 0, tx_queue = ctx->total_drop = ctx->total_drop_sz = 0;
+         i < ctx->nbruns;
+         ctx->total_drop += nb_drop, i++, diff++) {
+        // Modify src and dst ip addresses
+        if (diff > 0) {
+            printf("Modify packets with %u\n", diff);
+            for (j = 0; j < ctx->nb_pkt; j++) {
+                struct rte_mbuf *mbuf = &mbuf[j];
+                struct rte_ether_hdr *eth_hdr = rte_pktmbuf_mtod(mbuf, struct rte_ether_hdr *);
+                struct rte_ipv4_hdr *ipv4_hdr = (struct rte_ipv4_hdr *)(eth_hdr + 1);
+                ipv4_hdr->src_addr += diff;
+                ipv4_hdr->dst_addr += diff;
+            }
+        }
+
         /* iterate on pkts for every batch of BURST_SZ number of packets */
         for (total_to_sent = ctx->nb_pkt, nb_drop = 0, to_sent = min(BURST_SZ, total_to_sent);
              to_sent;
@@ -349,7 +365,7 @@ int tx_thread(void* thread_ctx)
 #ifdef DEBUG
         if (unlikely(nb_drop))
             printf("[thread %i]: on loop %i: sent %i pkts (%i were dropped).\n",
-                   thread_id, ctx->nbruns - run_cpt, ctx->nb_pkt, nb_drop);
+                   thread_id, i, ctx->nb_pkt, nb_drop);
 #endif /* DEBUG */
     }
 
