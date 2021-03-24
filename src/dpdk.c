@@ -326,7 +326,7 @@ int tx_thread(void* thread_ctx)
         if (diff > 0) {
             printf("Modify packets with %u\n", diff);
             for (j = 0; j < ctx->nb_pkt; j++) {
-                struct rte_mbuf *mbuf = &mbuf[j];
+                struct rte_mbuf *mbuf = mbuf[j];
                 struct rte_ether_hdr *eth_hdr = rte_pktmbuf_mtod(mbuf, struct rte_ether_hdr *);
                 struct rte_ipv4_hdr *ipv4_hdr = (struct rte_ipv4_hdr *)(eth_hdr + 1);
                 ipv4_hdr->src_addr += diff;
