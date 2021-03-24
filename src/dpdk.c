@@ -282,7 +282,7 @@ double timespec_diff_to_double(const struct timespec start, const struct timespe
 int tx_thread(void* thread_ctx)
 {
     struct thread_ctx*  ctx;
-    struct rte_mbuf**   mbuf;
+    struct rte_mbuf**   mbufs;
     struct timespec     start, end;
     unsigned int        tx_queue;
     int                 ret, thread_id, i, j, index, retry_tx;
@@ -295,7 +295,7 @@ int tx_thread(void* thread_ctx)
     /* retrieve thread context */
     ctx = (struct thread_ctx*)thread_ctx;
     thread_id = ctx->tx_port_id;
-    mbuf = ctx->pcap_cache->mbufs;
+    mbufs = ctx->pcap_cache->mbufs;
 #ifdef DEBUG
     printf("Starting thread %i.\n", thread_id);
 #endif
@@ -326,7 +326,7 @@ int tx_thread(void* thread_ctx)
         if (diff > 0) {
             printf("Modify packets with %u\n", diff);
             for (j = 0; j < ctx->nb_pkt; j++) {
-                struct rte_mbuf *mbuf = mbuf[j];
+                struct rte_mbuf *mbuf = mbufs[j];
                 struct rte_ether_hdr *eth_hdr = rte_pktmbuf_mtod(mbuf, struct rte_ether_hdr *);
                 struct rte_ipv4_hdr *ipv4_hdr = (struct rte_ipv4_hdr *)(eth_hdr + 1);
                 ipv4_hdr->src_addr += diff;
@@ -348,7 +348,7 @@ int tx_thread(void* thread_ctx)
                  total_sent += nb_sent, retry_tx--) {
                 nb_sent = rte_eth_tx_burst(ctx->tx_port_id,
                                            (tx_queue++ % NB_TX_QUEUES),
-                                           &(mbuf[index + total_sent]),
+                                           &(mbufs[index + total_sent]),
                                            to_sent - total_sent);
                 if (retry_tx != NB_RETRY_TX &&
                     tx_queue % NB_TX_QUEUES == 0)
@@ -358,8 +358,8 @@ int tx_thread(void* thread_ctx)
             if (unlikely(!retry_tx))
                 for (i = total_sent; i < to_sent; i++) {
                     nb_drop++;
-                    ctx->total_drop_sz += mbuf[index + i]->pkt_len;
-                    rte_pktmbuf_free(mbuf[index + i]);
+                    ctx->total_drop_sz += mbufs[index + i]->pkt_len;
+                    rte_pktmbuf_free(mbufs[index + i]);
                 }
         }
 #ifdef DEBUG
